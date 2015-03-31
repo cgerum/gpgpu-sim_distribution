@@ -83,8 +83,9 @@ void myexit(int code, const char *str, ... )
    vmyexit(code,str,ap);
    va_end(ap);
 }
-int main(int argc, const char **argv)
-{
+
+
+int nvidia_main(int argc, const char **argv) {
    cl_context context;
    cl_program pgm;
    cl_int errcode;
@@ -206,5 +207,88 @@ int main(int argc, const char **argv)
    fp = fopen(argv[2],"w");
    fprintf(fp,"%s",binaries[0]);
    fclose(fp);
+
+   return 0;
+}
+
+
+int clang_main(int argc, const char **argv){
+  char *libclc_path;
+  bool debug;
+  libclc_path = getenv("LIBCLC_PATH");
+  if(libclc_path == NULL){
+    libclc_path = "/local/gerum/tricore/timing-annotation/external/install/";
+  }
+
+  char *ld_library_path;
+  ld_library_path = getenv("LD_LIBRARY_PATH");
+  if(ld_library_path == NULL){
+    setenv("LD_LIBRARY_PATH", "/usr/local/lib64", 1);
+  }else{
+    char buffer[1024];
+    snprintf(buffer, 1024, "/usr/local/lib64:%s", ld_library_path);
+    setenv("LD_LIBRARY_PATH", buffer, 1);  
+  }
+
+  ld_library_path = getenv("LD_LIBRARY_PATH");
+  printf ("LD_LIBRARY_PATH = %s\n", ld_library_path);
+
+  printf("%s: command line = \'",PREAMBLE);
+  for( int i=0; i < argc; i++ ) {
+      printf("%s", argv[i]);
+      if( (i+1) < argc ) printf(" ");
+  }
+  printf("'\n");
+
+  if( !strncmp(argv[1],"-d",2) ) {
+      printf("nvopencl_wrapper started\n");
+      fflush(stdout);
+      debug=true;
+      argv = argv+1;
+      argc--; 
+   }
+
+
+  char commandline[1024];
+  snprintf(commandline, 1024, "/local/gerum/tricore/timing-annotation/external/install/bin/clang -g -x cl -O3 -target nvptx64--nvidiacl -I%s/ptx-nvidiacl/include -I%s/include/  -include %s/include/clc/clc.h -Dcl_clang_storage_class_specifiers -Wno-incompatible-library-redeclaration -Dcl_khr_fp64 %s -S -emit-llvm -o %s.ll",  libclc_path, libclc_path, libclc_path,  argv[1], argv[2]);
+  if(debug)
+    printf("Commandline is: %s\n", commandline);
+
+  system(commandline);
+  
+  snprintf(commandline, 1024, "/local/gerum/tricore/timing-annotation/external/install/bin/llvm-link   %s.ll %s/lib/clc/nvptx64--nvidiacl.bc -o %s.linked.bc", argv[2],  libclc_path, argv[2]);
+  if(debug)
+    printf("Commandline is: %s\n", commandline);
+
+  
+  system(commandline);
+
+  snprintf(commandline, 1024, "/local/gerum/tricore/timing-annotation/external/install/bin/opt -O3 -mtriple nvptx64--nvidiacl %s.linked.bc -o %s.opt.bc", argv[2], argv[2]);
+  if(debug)
+    printf("Commandline is: %s\n", commandline);
+
+  system(commandline);
+
+  snprintf(commandline, 1024, "/local/gerum/tricore/timing-annotation/external/install/bin/llc -mcpu=sm_20 -mattr=+ptx30,-ptx31 -O3  -mtriple nvptx64--nvidiacl %s.opt.bc -o %s --asm-verbose=0", argv[2], argv[2]);
+  if(debug)
+    printf("Commandline is: %s\n", commandline);
+
+  system(commandline);
+
+
+  return 0;
+}
+
+int main(int argc, const char **argv)
+{
+  char* use_clang;
+  use_clang = getenv ("NV_OCL_USE_CLANG");
+
+  if(use_clang){
+    clang_main(argc, argv);
+  }else{
+    nvidia_main(argc, argv);
+  }
+  
    return 0;
 }
