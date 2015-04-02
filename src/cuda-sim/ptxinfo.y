@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token LMEM
 %token SMEM
 %token CMEM
+%token GMEM
 %token <string_value> IDENTIFIER
 %token PLUS
 %token COMMA
@@ -83,6 +84,7 @@ line: 	HEADER INFO COLON line_info
 
 line_info: function_name
 	| function_info { ptxinfo_addinfo(); }
+        | INT_OPERAND BYTES GMEM
 	;
 
 function_name: FUNC QUOTE IDENTIFIER QUOTE { ptxinfo_function($3); }

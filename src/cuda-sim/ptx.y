@@ -238,7 +238,8 @@ function_ident_param: IDENTIFIER { add_function_name($1); } LEFT_PAREN {func_hea
 	| IDENTIFIER { add_function_name($1); g_func_decl=0; } 
 	;
 
-function_decl_header: ENTRY_DIRECTIVE { $$ = 1; g_func_decl=1; func_header(".entry"); }
+function_decl_header: VISIBLE_DIRECTIVE ENTRY_DIRECTIVE { $$ = 1; g_func_decl=1; func_header(".entry"); }
+        | ENTRY_DIRECTIVE { $$ = 1; g_func_decl=1; func_header(".entry"); }
 	| FUNC_DIRECTIVE { $$ = 0; g_func_decl=1; func_header(".func"); }
 	| VISIBLE_DIRECTIVE FUNC_DIRECTIVE { $$ = 0; g_func_decl=1; func_header(".func"); }
 	| EXTERN_DIRECTIVE FUNC_DIRECTIVE { $$ = 2; g_func_decl=1; func_header(".func"); }
