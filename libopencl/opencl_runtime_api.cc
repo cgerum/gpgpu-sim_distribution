@@ -424,6 +424,11 @@ void _cl_program::Build(const char *options)
 {
    printf("GPGPU-Sim OpenCL API: compiling OpenCL kernels...\n"); 
    std::map<cl_uint,pgm_info>::iterator i;
+
+   char* use_clang;
+   use_clang = getenv ("NV_OCL_USE_CLANG");
+
+
    for( i = m_pgm.begin(); i!= m_pgm.end(); i++ ) {
       pgm_info &info=i->second;
       sg_info = &info;
@@ -432,10 +437,16 @@ void _cl_program::Build(const char *options)
       char *use_extracted_ptx = getenv("PTX_SIM_USE_PTX_FILE");
       if( use_extracted_ptx == NULL ) {
          char *nvopencl_libdir = getenv("NVOPENCL_LIBDIR");
-         const std::string gpgpu_opencl_path_str = std::string(getenv("GPGPUSIM_ROOT"))
-            + "/build/" + std::string(getenv("GPGPUSIM_CONFIG"));
+         char *gpgpusim_root = getenv("GPGPUSIM_ROOT");
+         char *gpgpusim_config = getenv("GPGPUSIM_CONFIG");
+         
+         fprintf(stderr, "GPGPUSIM_ROOT: %s\n", gpgpusim_root);
+         fprintf(stderr, "GPGPUSIM_CONFIG: %s\n", gpgpusim_config);
+         
+         const std::string gpgpu_opencl_path_str = std::string(gpgpusim_root)
+            + "/build/" + std::string(gpgpusim_config);
          bool error = false;
-         if( nvopencl_libdir == NULL ) {
+         if( nvopencl_libdir == NULL  && use_clang == NULL) {
             printf("GPGPU-Sim OpenCL API: Please set your NVOPENCL_LIBDIR environment variable to\n"
                    "                      the location of NVIDIA's libOpenCL.so file on your system.\n");
             error = true;

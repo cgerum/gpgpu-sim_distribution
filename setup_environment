@@ -3,7 +3,8 @@
 #ps -p $$ | awk '/bash/ || / sh/ || /zsh/ {exit 1;}' && echo "ERROR ** source setup_environment must be run in a bash, zsh or sh shell; see README" && exit
 
 export GPGPUSIM_SETUP_ENVIRONMENT_WAS_RUN=
-export GPGPUSIM_ROOT="$( cd "$( dirname "$BASH_SOURCE" )" && pwd )"
+#export GPGPUSIM_ROOT="$( cd "$( dirname "$BASH_SOURCE" )" && pwd )"
+export GPGPUSIM_ROOT="${PWD}"
 
 GPGPUSIM_VERSION_STRING=`cat $GPGPUSIM_ROOT/version | awk '/Version/ {print $8}'`
 GPGPUSIM_BUILD_STRING=`cat $GPGPUSIM_ROOT/version | awk '/Change/ {print $6}'`
@@ -48,12 +49,12 @@ if [ $CUDA_VERSION_NUMBER -gt 4020 -o $CUDA_VERSION_NUMBER -lt 2030  ]; then
 	#return;
 fi
 
-if [ $# = '1' ] ;
-then
-    export GPGPUSIM_CONFIG=gcc-$CC_VERSION/cuda-$CUDA_VERSION_NUMBER/$1
-else
+#if [ $# = '1' ] ;
+#then
+#    export GPGPUSIM_CONFIG=gcc-$CC_VERSION/cuda-$CUDA_VERSION_NUMBER/$1
+#else
     export GPGPUSIM_CONFIG=gcc-$CC_VERSION/cuda-$CUDA_VERSION_NUMBER/release
-fi
+#fi
 
 export QTINC=/usr/include
 

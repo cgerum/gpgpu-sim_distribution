@@ -93,7 +93,7 @@ int nvidia_main(int argc, const char **argv) {
 
    bool debug=false;
 
-   printf("%s: command line = \'",PREAMBLE);
+   printf("%s: command line = \'", PREAMBLE);
    for( int i=0; i < argc; i++ ) {
       printf("%s", argv[i]);
       if( (i+1) < argc ) printf(" ");
@@ -217,16 +217,16 @@ int clang_main(int argc, const char **argv){
   bool debug;
   libclc_path = getenv("LIBCLC_PATH");
   if(libclc_path == NULL){
-    libclc_path = "/local/gerum/tricore/timing-annotation/external/install/";
+    libclc_path = "/local/gerum/projects/timing/timing-annotation/external/install/";
   }
 
   char *ld_library_path;
   ld_library_path = getenv("LD_LIBRARY_PATH");
   if(ld_library_path == NULL){
-    setenv("LD_LIBRARY_PATH", "/usr/local/lib64", 1);
+    setenv("LD_LIBRARY_PATH", "/afs/wsi/ti/compiler/gcc/6.1/lib64:/afs/wsi/ti/compiler/gcc/6.1/lib:/local/gerum/srcs/boost_1_57_0/stage/lib/:/local/gerum/srcs/boost_1_61_0/stage/lib/", 1);
   }else{
-    char buffer[1024];
-    snprintf(buffer, 1024, "/usr/local/lib64:%s", ld_library_path);
+    char buffer[1024*8];
+    snprintf(buffer, 1024, "/afs/wsi/ti/compiler/gcc/6.1/lib64:/afs/wsi/ti/compiler/gcc/6.1/lib:/local/gerum/srcs/boost_1_57_0/stage/lib/:/local/gerum/srcs/boost_1_61_0/stage/lib/:%s", ld_library_path);
     setenv("LD_LIBRARY_PATH", buffer, 1);  
   }
 
@@ -249,27 +249,32 @@ int clang_main(int argc, const char **argv){
    }
 
 
+  const char *clang_path = "/local/gerum/projects/timing/timing-annotation/external/install/bin/clang";
+  const char *link_path  = "/local/gerum/projects/timing/timing-annotation/external/install/bin/llvm-link";
+  const char *opt_path   = "/local/gerum/projects/timing/timing-annotation/external/install/bin/opt";
+  const char *llc_path   = "/local/gerum/projects/timing/timing-annotation/external/install/bin/llc";
+  
   char commandline[1024];
-  snprintf(commandline, 1024, "/local/gerum/tricore/timing-annotation/external/install/bin/clang -g -x cl -O3 -target nvptx64--nvidiacl -I%s/ptx-nvidiacl/include -I%s/include/  -include %s/include/clc/clc.h -Dcl_clang_storage_class_specifiers -Wno-incompatible-library-redeclaration -Dcl_khr_fp64 %s -S -emit-llvm -o %s.ll",  libclc_path, libclc_path, libclc_path,  argv[1], argv[2]);
+  snprintf(commandline, 1024, "%s -g -x cl -O3 -target nvptx64--nvidiacl -I%s/ptx-nvidiacl/include -I%s/include/  -include %s/include/clc/clc.h -Dcl_clang_storage_class_specifiers -Wno-incompatible-library-redeclaration -Dcl_khr_fp64 %s -S -emit-llvm -o %s.ll",  clang_path, libclc_path, libclc_path, libclc_path,  argv[1], argv[2]);
   if(debug)
     printf("Commandline is: %s\n", commandline);
 
   system(commandline);
   
-  snprintf(commandline, 1024, "/local/gerum/tricore/timing-annotation/external/install/bin/llvm-link   %s.ll %s/lib/clc/nvptx64--nvidiacl.bc -o %s.linked.bc", argv[2],  libclc_path, argv[2]);
+  snprintf(commandline, 1024, "%s   %s.ll %s/lib/clc/nvptx64--nvidiacl.bc -o %s.linked.bc", link_path, argv[2],  libclc_path, argv[2]);
   if(debug)
     printf("Commandline is: %s\n", commandline);
 
   
   system(commandline);
 
-  snprintf(commandline, 1024, "/local/gerum/tricore/timing-annotation/external/install/bin/opt -O3 -mtriple nvptx64--nvidiacl %s.linked.bc -o %s.opt.bc", argv[2], argv[2]);
+  snprintf(commandline, 1024, "%s -O3 -mtriple nvptx64--nvidiacl %s.linked.bc -o %s.opt.bc", opt_path, argv[2], argv[2]);
   if(debug)
     printf("Commandline is: %s\n", commandline);
 
   system(commandline);
 
-  snprintf(commandline, 1024, "/local/gerum/tricore/timing-annotation/external/install/bin/llc -mcpu=sm_20 -mattr=+ptx30,-ptx31 -O3  -mtriple nvptx64--nvidiacl %s.opt.bc -o %s --asm-verbose=0", argv[2], argv[2]);
+  snprintf(commandline, 1024, "%s -mcpu=sm_20  -O3  -mtriple nvptx64--nvidiacl %s.opt.bc -o %s --asm-verbose=0", llc_path, argv[2], argv[2]);
   if(debug)
     printf("Commandline is: %s\n", commandline);
 
